@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Freno de Emergencia Anti-Ex</title>
+  
+   <!-- Tailwind CSS -->
+   <script src="https://cdn.tailwindcss.com"></script>
+  
+   <!-- Importmap para dependencias exactas requeridas y runtime de JSX para Babel -->
+   <script type="importmap">
+   {
+       "imports": {
+           "react": "https://esm.sh/react@18.2.0",
+           "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime",
+           "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+           "lucide-react": "https://esm.sh/lucide-react@0.292.0"
+       }
+   }
+   </script>
+  
+   <!-- Babel para compilar JSX en el navegador -->
+   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+
+   <style>
+       /* Animaciones personalizadas con Tailwind */
+       @keyframes breathe {
+           0%, 100% { transform: scale(1); opacity: 0.8; }
+           50% { transform: scale(1.15); opacity: 1; }
+       }
+       .animate-breathe {
+           animation: breathe 8s ease-in-out infinite;
+       }
+       @keyframes fadeIn {
+           from { opacity: 0; transform: translateY(10px); }
+           to { opacity: 1; transform: translateY(0); }
+       }
+       .animate-fade-in {
+           animation: fadeIn 0.4s ease-out forwards;
+       }
+   </style>
+</head>
+<body class="bg-slate-50 p-4 md:p-8 font-sans antialiased text-slate-900">
+   <div id="root"></div>
+
+
+   <script type="text/babel" data-type="module">
+       import React, { useState, useEffect, useRef } from 'react';
+       import { createRoot } from 'react-dom/client';
+       import {
+           AlertTriangle,
+           MessageSquare,
+           Eye,
+           ShieldAlert,
+           Timer,
+           ArrowRight,
+           CheckCircle2,
+           XCircle,
+           Trash2,
+           Lock,
+           ChevronRight,
+           Award,
+           Activity,
+           Brain,
+           Volume2,
+           VolumeX,
+           Mail,
+           Download,
+           Heart
+       } from 'lucide-react';
+
+
+       // --- Frases de Consciencia Brutal Contra el Stalkeo ---
+       const CONSCIOUS_STALKING_QUOTES = [
+           "Stalkear no es buscar información; es buscar un motivo para seguir doliéndote. Estás intoxicando tu salud mental a cambio de nada.",
+           "Tu ego odia perder y no soporta el rechazo. Cuando revisas sus redes, no actúa tu voluntad libre, actúa tu ego herido intentando recuperar control.",
+           "Saber perfectamente que ver su perfil te va a destruir el día, y aun así hacerlo... Eso es adicción al dolor. Tu mente se aferra a recuerdos para no aceptar el vacío.",
+           "Mientras tú pierdes minutos valiosos de tu vida investigando qué hace, la otra persona sigue adelante. Estás prolongando tu propio sufrimiento.",
+           "Cada vez que buscas su nombre, le regalas el control de tu estabilidad emocional por las próximas 24 horas. ¿De verdad vale tan poco tu paz?",
+           "Tu verdadero yo quiere sanar y ser libre. Tu ego prefiere arrastrarse y aferrarse a la fantasía del pasado. No dejes que tu orgullo decida por ti.",
+           "Revisar sus redes es como morder una herida abierta esperando que sane. Lo único que logras es retrasar tu cicatrización un día más.",
+           "Te aferras a la expectativa de un milagro, un cambio o una señal. La señal real es que no está a tu lado. Aceptarlo duele, pero te devuelve tu vida.",
+           "Esa cuenta que revisas le pertenece a un extraño. El ex que tú extrañas ya no existe, solo vive en tu imaginación y en tu obsesión por el pasado.",
+           "El impulso incontrolable de stalkear dura solo unos minutos. Tu dignidad y tu paz mental duran toda la vida. Recupera el control de tus dedos ahora mismo."
+       ];
+
+
+       // --- SINTETIZADOR AMBIENTAL NATIVO (WEB AUDIO API ENGINE) ---
+       class AmbientSynth {
+           constructor() {
+               this.ctx = null;
+               this.mainGain = null;
+               this.delayNode = null;
+               this.feedbackGain = null;
+               this.oscs = [];
+               this.isPlaying = false;
+               this.chimeTimer = null;
+               this.padTimer = null;
+               this.isMuted = false;
+           }
+
+
+           init() {
+               if (this.ctx) return;
+               this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+              
+               // Nodo de volumen maestro
+               this.mainGain = this.ctx.createGain();
+               this.mainGain.gain.setValueAtTime(0, this.ctx.currentTime);
+               this.mainGain.connect(this.ctx.destination);
+
+
+               // Delay / Eco espacial para dar profundidad meditativa
+               this.delayNode = this.ctx.createDelay();
+               this.delayNode.delayTime.setValueAtTime(0.8, this.ctx.currentTime);
+               this.feedbackGain = this.ctx.createGain();
+               this.feedbackGain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+
+
+               // Conexiones del circuito de delay con feedback
+               this.delayNode.connect(this.feedbackGain);
+               this.feedbackGain.connect(this.delayNode);
+              
+               // Mezcla de señales secas y procesadas
+               this.mainGain.connect(this.delayNode);
+               this.delayNode.connect(this.ctx.destination);
+           }
+
+
+           start() {
+               this.init();
+               if (this.ctx.state === 'suspended') {
+                   this.ctx.resume();
+               }
+               this.isPlaying = true;
+              
+               // Fade-in suave del volumen maestro (3 segundos)
+               const targetVolume = this.isMuted ? 0 : 0.35;
+               this.mainGain.gain.linearRampToValueAtTime(targetVolume, this.ctx.currentTime + 3);
+
+
+               // Lanzar los acordes envolventes y las campanas pentatónicas
+               this.startEvolvingPads();
+               this.scheduleChimes();
+           }
+
+
+           startEvolvingPads() {
+               const chords = [
+                   [130.81, 164.81, 196.00, 246.94], // Cmaj7 (Calma inicial)
+                   [174.61, 220.00, 261.63, 329.63], // Fmaj7 (Apertura de pecho)
+                   [146.83, 174.61, 220.00, 293.66], // Dm7 (Tránsito suave)
+                   [196.00, 246.94, 293.66, 392.00]  // G7sus4 (Resolución)
+               ];
+
+
+               let chordIndex = 0;
+               const playNextChord = () => {
+                   if (!this.isPlaying) return;
+                  
+                   const oldOscs = [...this.oscs];
+                   this.oscs = [];
+                   const now = this.ctx.currentTime;
+                   oldOscs.forEach(o => {
+                       o.gain.gain.linearRampToValueAtTime(0, now + 4);
+                       setTimeout(() => {
+                           try { o.osc.stop(); } catch(e) {}
+                       }, 5000);
+                   });
+
+
+                   const notes = chords[chordIndex];
+                   notes.forEach(freq => {
+                       const osc = this.ctx.createOscillator();
+                       const oscGain = this.ctx.createGain();
+                      
+                       osc.type = 'triangle';
+                       osc.frequency.setValueAtTime(freq, now);
+                       osc.detune.setValueAtTime(Math.random() * 8 - 4, now);
+
+
+                       oscGain.gain.setValueAtTime(0, now);
+                       oscGain.gain.linearRampToValueAtTime(0.04, now + 4.5);
+
+
+                       const lowpass = this.ctx.createBiquadFilter();
+                       lowpass.type = 'lowpass';
+                       lowpass.frequency.setValueAtTime(320, now);
+
+
+                       osc.connect(oscGain);
+                       oscGain.connect(lowpass);
+                       lowpass.connect(this.mainGain);
+                      
+                       osc.start(now);
+                       this.oscs.push({ osc, gain: oscGain });
+                   });
+
+
+                   chordIndex = (chordIndex + 1) % chords.length;
+                   this.padTimer = setTimeout(playNextChord, 12000);
+               };
+
+
+               playNextChord();
+           }
+
+
+           scheduleChimes() {
+               if (!this.isPlaying) return;
+
+
+               const scale = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+               const playChime = () => {
+                   if (!this.isPlaying) return;
+
+
+                   const freq = scale[Math.floor(Math.random() * scale.length)];
+                   const now = this.ctx.currentTime;
+
+
+                   const osc = this.ctx.createOscillator();
+                   const gainNode = this.ctx.createGain();
+
+
+                   osc.type = 'sine';
+                   osc.frequency.setValueAtTime(freq, now);
+
+
+                   gainNode.gain.setValueAtTime(0, now);
+                   gainNode.gain.linearRampToValueAtTime(0.06, now + 0.1);
+                   gainNode.gain.exponentialRampToValueAtTime(0.0001, now + 3.5);
+
+
+                   osc.connect(gainNode);
+                   gainNode.connect(this.mainGain);
+
+
+                   osc.start(now);
+                   osc.stop(now + 4);
+
+
+                   const nextTime = 3000 + Math.random() * 4000;
+                   this.chimeTimer = setTimeout(playChime, nextTime);
+               };
+
+
+               this.chimeTimer = setTimeout(playChime, 2000);
+           }
+
+
+           stop() {
+               this.isPlaying = false;
+               clearTimeout(this.chimeTimer);
+               clearTimeout(this.padTimer);
+               if (this.mainGain) {
+                   this.mainGain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 1.5);
+               }
+               setTimeout(() => {
+                   this.oscs.forEach(o => {
+                       try { o.osc.stop(); } catch(e) {}
+                   });
+                   this.oscs = [];
+               }, 2000);
+           }
+
+
+           setMute(mute) {
+               this.isMuted = mute;
+               if (this.mainGain && this.ctx) {
+                   const targetVolume = mute ? 0 : 0.35;
+                   this.mainGain.gain.linearRampToValueAtTime(targetVolume, this.ctx.currentTime + 0.8);
+               }
+           }
+       }
+
+
+       const ambientPlayer = new AmbientSynth();
+
+
+       // --- 6 Opciones de Traducción Brutal para Mensajes de Texto ---
+       const BRUTAL_TRANSLATIONS = [
+           "Traducción real: 'Hola, sigo disponible y orbitando tu vida porque no sé estar sin ti. Haz conmigo lo que quieras y cuando quieras, no me importa mi dignidad.'",
+           "Traducción real: 'Estoy dispuesto/a a conformarme con migajas de tu atención y a ignorar activamente todas las razones de peso por las que terminamos.'",
+           "Traducción real: 'Mírame suplicar. Mis límites personales son inexistentes y te estoy entregando de manera voluntaria todo el control sobre mi estabilidad emocional.'",
+           "Traducción real: 'Hola, vengo a interrumpir tu paz porque prefiero humillarme un rato antes que sostener la incomodidad de mi propia soledad y vacío.'",
+           "Traducción real: 'Por favor, valídame. Necesito que me respondas aunque sea de manera fría o cortante para recordar que sigo existiendo en tu radar.'",
+           "Traducción real: 'Estoy rompiendo mi propio autorespeto para recordarte que sigo esperando un milagro que sé perfectamente que nunca va a suceder.'"
+       ];
+
+
+       // --- VISTA: Home ---
+       function HomeView({ setView, startStalkerBrake, stats }) {
+           return (
+               <div className="animate-fade-in space-y-6">
+                   <div className="text-center space-y-2">
+                       <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                           <ShieldAlert className="w-8 h-8 text-red-600" />
+                       </div>
+                       <h2 className="text-2xl font-bold text-slate-900">Freno de Emergencia Anti-Ex</h2>
+                       <p className="text-slate-500 text-sm">No des un paso del que te vas a arrepentir en 5 minutos. Selecciona tu crisis actual:</p>
+                   </div>
+
+
+                   <div className="grid gap-4 mt-8">
+                       <button
+                           onClick={() => setView('interceptor_input')}
+                           className="w-full group relative flex flex-col items-center justify-center p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-indigo-500 hover:shadow-md transition-all duration-300 active:scale-95"
+                       >
+                           <MessageSquare className="w-8 h-8 text-indigo-500 mb-3 group-hover:scale-110 transition-transform duration-300" />
+                           <span className="font-semibold text-lg text-slate-800">Tengo ganas de Escribirle</span>
+                           <span className="text-sm text-slate-500 mt-1">Intercepta tu mensaje antes de enviarlo</span>
+                       </button>
+
+
+                       <button
+                           onClick={startStalkerBrake}
+                           className="w-full group relative flex flex-col items-center justify-center p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-red-500 hover:shadow-md transition-all duration-300 active:scale-95"
+                       >
+                           <Eye className="w-8 h-8 text-red-500 mb-3 group-hover:scale-110 transition-transform duration-300" />
+                           <span className="font-semibold text-lg text-slate-800">Tengo ganas de Stalkear</span>
+                           <span className="text-sm text-slate-500 mt-1">Bloqueo de ansiedad de 5 minutos</span>
+                       </button>
+                   </div>
+
+
+                   {/* Gamificación: Stats guardadas */}
+                   {(stats.avoidedMessages > 0 || stats.avoidedStalks > 0) && (
+                       <div className="mt-8 p-4 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center gap-4">
+                           <div className="p-2 bg-emerald-100 rounded-lg">
+                               <Award className="w-6 h-6 text-emerald-600" />
+                           </div>
+                           <div>
+                               <p className="text-sm font-semibold text-emerald-900">Dignidad Salvada en el Historial</p>
+                               <p className="text-xs text-emerald-700">
+                                   Has evitado escribirle {stats.avoidedMessages} {stats.avoidedMessages === 1 ? 'vez' : 'veces'} y stalkear su perfil {stats.avoidedStalks} {stats.avoidedStalks === 1 ? 'vez' : 'veces'}.
+                               </p>
+                           </div>
+                       </div>
+                   )}
+               </div>
+           );
+       }
+
+
+       // --- VISTA: Entrada del Interceptor ---
+       function InterceptorInputView({ setView, messageDraft, setMessageDraft, handleAnalyzeMessage, isTranslating }) {
+           return (
+               <div className="animate-fade-in flex flex-col h-full">
+                   <button onClick={() => setView('home')} className="self-start text-sm text-slate-500 flex items-center gap-1 hover:text-slate-800 mb-6 transition-colors">
+                       <ChevronRight className="w-4 h-4 rotate-180" /> Volver al menú
+                   </button>
+                  
+                   <div className="space-y-4">
+                       <div className="flex items-center gap-3">
+                           <MessageSquare className="w-6 h-6 text-indigo-600" />
+                           <h3 className="text-xl font-bold">Simulador de Mensajes</h3>
+                       </div>
+                       <p className="text-sm text-slate-600">Escribe o pega aquí exactamente el texto que planeabas mandar. Lo analizaremos objetivamente antes de que arruines tu progreso.</p>
+                      
+                       <form onSubmit={handleAnalyzeMessage} className="space-y-4">
+                           <textarea
+                               value={messageDraft}
+                               onChange={(e) => setMessageDraft(e.target.value)}
+                               placeholder="Escribe tu mensaje aquí..."
+                               className="w-full h-40 p-4 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none transition-all text-slate-800"
+                               required
+                           />
+                          
+                           <button
+                               type="submit"
+                               disabled={isTranslating || !messageDraft.trim()}
+                               className="w-full py-4 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-70 disabled:active:scale-100"
+                           >
+                               {isTranslating ? (
+                                   <span className="flex items-center gap-2">
+                                       <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                       Desnudando la verdad del ego...
+                                   </span>
+                               ) : (
+                                   <span className="flex items-center gap-2">
+                                       Traducir Mensaje <ArrowRight className="w-5 h-5" />
+                                   </span>
+                               )}
+                           </button>
+                       </form>
+                   </div>
+               </div>
+           );
+       }
+
+
+       // --- VISTA: Resultado del Interceptor ---
+       function InterceptorResultView({ setView, messageDraft, selectedTranslation, handleGoToEmailGate }) {
+           return (
+               <div className="animate-fade-in space-y-6 text-center">
+                   <div className="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mb-2">
+                       <Lock className="w-8 h-8 text-indigo-600" />
+                   </div>
+                   <h3 className="text-2xl font-bold text-slate-900">Análisis Completado</h3>
+                  
+                   <div className="bg-slate-100 p-5 rounded-xl text-left border border-slate-200">
+                       <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Tu borrador original:</span>
+                       <p className="mt-2 text-slate-400 line-through italic text-sm">"{messageDraft}"</p>
+                   </div>
+
+
+                   <div className="bg-red-50 p-5 rounded-xl text-left border border-red-200 shadow-sm relative overflow-hidden">
+                       <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
+                       <span className="text-xs font-bold text-red-600 uppercase tracking-wider flex items-center gap-1">
+                           <AlertTriangle className="w-4 h-4" /> Lo que tu ex va a interpretar realmente:
+                       </span>
+                       <p className="mt-2 font-medium text-slate-800 text-sm md:text-base leading-relaxed text-red-950">
+                           {selectedTranslation}
+                       </p>
+                   </div>
+
+
+                   <div className="flex flex-col gap-3">
+                       <button
+                           onClick={handleGoToEmailGate}
+                           className="w-full py-4 bg-slate-900 text-white font-bold rounded-xl shadow-md hover:bg-slate-800 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2"
+                       >
+                           <Trash2 className="w-5 h-5" />
+                           Borrar Mensaje y Cuidar mi Dignidad
+                       </button>
+                      
+                       <button
+                           onClick={() => setView('interceptor_input')}
+                           className="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors"
+                       >
+                           Probar con otra frase
+                       </button>
+                   </div>
+               </div>
+           );
+       }
+
+
+       // --- VISTA: Cronómetro de Abstinencia / Botón de Pánico Stalker ---
+       function StalkerTimerView({
+           timeLeft,
+           quoteIndex,
+           showAbortConfirm,
+           confirmAbort,
+           cancelAbort,
+           triggerAbortConfirmation,
+           formatTime,
+           isMuted,
+           setIsMuted
+       }) {
+           return (
+               <div className="animate-fade-in flex flex-col items-center text-center space-y-8 py-4 relative">
+                  
+                   {/* Botón flotante para mutear/reproducir la música SOS */}
+                   <button
+                       onClick={() => setIsMuted(!isMuted)}
+                       className="absolute top-0 right-0 p-2 bg-slate-100 hover:bg-indigo-50 text-slate-600 rounded-full transition-all active:scale-95 flex items-center gap-1.5 shadow-sm text-xs border border-slate-200"
+                       title={isMuted ? "Activar música" : "Silenciar música"}
+                   >
+                       {isMuted ? (
+                           <React.Fragment>
+                               <VolumeX className="w-4 h-4 text-red-500 animate-pulse" />
+                               <span className="font-semibold text-red-600">Música Muteada</span>
+                           </React.Fragment>
+                       ) : (
+                           <React.Fragment>
+                               <Volume2 className="w-4 h-4 text-indigo-600" />
+                               <span className="font-semibold text-slate-700">Música Relax</span>
+                           </React.Fragment>
+                       )}
+                   </button>
+
+
+                   <div className="space-y-2">
+                       <div className="flex items-center justify-center gap-2 text-red-600 font-bold uppercase text-xs tracking-wider pt-8 sm:pt-4">
+                           <Activity className="w-4 h-4 animate-pulse" /> Interrupción de Emergencia
+                       </div>
+                       <h3 className="text-xl font-bold text-slate-900">Protocolo Desintoxicante</h3>
+                       <p className="text-sm text-slate-500 max-w-sm">Respira al ritmo del círculo y escucha las ondas de relajación.</p>
+                   </div>
+
+
+                   {/* Círculo de respiración */}
+                   <div className="relative w-48 h-48 flex items-center justify-center">
+                       <div className="absolute inset-0 bg-red-100 rounded-full animate-breathe"></div>
+                       <div className="absolute inset-4 bg-red-200 rounded-full animate-breathe" style={{animationDelay: '-2s'}}></div>
+                       <div className="relative z-10 w-34 h-34 bg-white rounded-full shadow-lg border-4 border-red-500 flex flex-col items-center justify-center">
+                           <Timer className="w-8 h-8 text-red-500 mb-1" />
+                           <span className="text-3xl font-black text-slate-900 font-mono tracking-tighter">
+                               {formatTime(timeLeft)}
+                           </span>
+                       </div>
+                   </div>
+
+
+                   {/* Caja de frases de consciencia del stalkeo */}
+                   <div className="min-h-[140px] flex flex-col items-center justify-center p-5 bg-slate-900 text-white rounded-xl w-full border border-slate-800 shadow-inner relative overflow-hidden">
+                       <div className="absolute top-2 left-4 flex items-center gap-1.5 text-[10px] font-bold text-indigo-400 tracking-wider uppercase">
+                           <Brain className="w-3.5 h-3.5" /> Hackeo Mental Contra el Ego
+                       </div>
+                       <p
+                           key={quoteIndex}
+                           className="animate-fade-in text-sm font-medium leading-relaxed italic text-slate-200 mt-3"
+                       >
+                           "{CONSCIOUS_STALKING_QUOTES[quoteIndex]}"
+                       </p>
+                   </div>
+
+
+                   {showAbortConfirm ? (
+                       <div className="bg-red-50 p-4 rounded-xl border border-red-200 w-full space-y-3 animate-fade-in">
+                           <p className="text-xs font-bold text-red-700 uppercase tracking-wide">¿Vas a dejar que tu ego tome el control hoy?</p>
+                           <p className="text-xs text-slate-700">Revisar su perfil ahora reiniciará tu proceso de sanación a cero. Tú tienes el poder de frenar esto.</p>
+                           <div className="flex gap-2 justify-center">
+                               <button
+                                   onClick={confirmAbort}
+                                   className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors"
+                               >
+                                   Sí, abandonar mi paz
+                               </button>
+                               <button
+                                   onClick={cancelAbort}
+                                   className="px-4 py-2 bg-slate-200 text-slate-800 text-xs font-bold rounded-lg hover:bg-slate-300 transition-colors"
+                               >
+                                   No, seguir firme
+                               </button>
+                           </div>
+                       </div>
+                   ) : (
+                       <button
+                           onClick={triggerAbortConfirmation}
+                           className="text-xs text-slate-400 hover:text-red-500 underline transition-colors"
+                       >
+                           Ceder ante el ego y sufrir (Abandonar)
+                       </button>
+                   )}
+               </div>
+           );
+       }
+
+
+       // --- VISTA: Captura de Correo (The Value-Hook Email Gate) ---
+       function EmailGateView({ setView, handleOptIn, optInEmail, setOptInEmail, isSubmitting, sourceCrisis }) {
+           return (
+               <div className="animate-fade-in space-y-6">
+                   <div className="text-center space-y-2">
+                       <div className="mx-auto w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-2">
+                           <Heart className="w-8 h-8 text-emerald-600 animate-pulse" />
+                       </div>
+                       <h3 className="text-2xl font-black text-slate-900 tracking-tight">¡Victoria Temporal!</h3>
+                       <p className="text-sm text-slate-500 max-w-sm mx-auto">
+                           {sourceCrisis === 'message'
+                               ? "Has borrado el mensaje y salvado tu dignidad por ahora."
+                               : "Lograste pasar los 5 minutos de respiración y enfriar tu sistema."
+                           } Sin embargo, la noche es larga y la tentación de caer volverá mañana.
+                       </p>
+                   </div>
+
+
+                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4">
+                       <h4 className="text-xs font-black text-slate-400 uppercase tracking-wider text-center">Desbloquea gratis tu Kit de Rescate de 24 Horas</h4>
+                      
+                       <div className="space-y-3">
+                           <div className="flex items-start gap-2.5">
+                               <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                               <span className="text-xs text-slate-600"><strong>El Audio SOS (MP3):</strong> Descárgalo para escucharlo offline cuando sientas pánico.</span>
+                           </div>
+                           <div className="flex items-start gap-2.5">
+                               <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                               <span className="text-xs text-slate-600"><strong>Guiones Anti-Recaída (PDF):</strong> Qué responder si te busca, sin humillarte.</span>
+                           </div>
+                           <div className="flex items-start gap-2.5">
+                               <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                               <span className="text-xs text-slate-600"><strong>Plan del Día Cero:</strong> Protocolo práctico para reprogramar tus mañanas.</span>
+                           </div>
+                       </div>
+
+
+                       <form onSubmit={handleOptIn} className="space-y-3 pt-2">
+                           <div className="relative">
+                               <Mail className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+                               <input
+                                   type="email"
+                                   placeholder="Ingresa tu mejor correo electrónico..."
+                                   value={optInEmail}
+                                   onChange={(e) => setOptInEmail(e.target.value)}
+                                   className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm"
+                                   required
+                               />
+                           </div>
+
+
+                           <button
+                               type="submit"
+                               disabled={isSubmitting || !optInEmail.trim()}
+                               className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl text-xs uppercase tracking-wider shadow-md hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-75"
+                           >
+                               {isSubmitting ? (
+                                   <React.Fragment>
+                                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                       Guardando racha y enviando kit...
+                                   </React.Fragment>
+                               ) : (
+                                   <React.Fragment>
+                                       <Download className="w-4 h-4" /> Enviar mi Kit de Rescate Gratis
+                                   </React.Fragment>
+                               )}
+                           </button>
+                       </form>
+                   </div>
+
+
+                   <p className="text-[10px] text-center text-slate-400 leading-relaxed">
+                       Cuidamos tu privacidad. Al unirte, recibirás el Kit interactivo de inmediato y consejos diarios sobre superación y dignidad de forma gratuita. Cancela tu suscripción con un solo clic cuando quieras.
+                   </p>
+               </div>
+           );
+       }
+
+
+       // --- VISTA: Éxito y Pitch de Venta (Lead Magnet Conversor / Tripwire Page) ---
+       function SuccessCTAView({ setView, registeredEmail }) {
+           return (
+               <div className="animate-fade-in flex flex-col items-center text-center space-y-6">
+                   <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center shadow-inner">
+                       <CheckCircle2 className="w-10 h-10 text-emerald-600" />
+                   </div>
+                  
+                   <div className="space-y-1">
+                       <h2 className="text-2xl font-black text-slate-900 leading-tight">¡Kit Enviado con Éxito!</h2>
+                       <p className="text-slate-500 text-xs">Hemos enviado el enlace de descarga a <strong>{registeredEmail}</strong>.</p>
+                       <p className="text-indigo-600 font-bold text-xs">Revisa tu bandeja de entrada en los próximos 2 minutos.</p>
+                   </div>
+
+
+                   {/* El pitch de ventas de "Mata la Esperanza" ($47 USD) */}
+                   <div className="bg-slate-900 text-left p-6 rounded-2xl shadow-lg w-full text-white relative overflow-hidden border border-slate-800">
+                       <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-500 opacity-20 rounded-full blur-2xl"></div>
+                      
+                       <span className="inline-block bg-indigo-600/30 text-indigo-400 border border-indigo-500/20 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider mb-2">OPORTUNIDAD ÚNICA</span>
+                       <p className="font-black text-lg mb-2 leading-tight">El kit te salvará hoy. Pero, ¿qué harás mañana?</p>
+                       <p className="text-slate-300 text-xs mb-6 leading-relaxed">
+                           Lograste no escribirle y bloquear el stalkeo temporal hoy, pero la esperanza de volver sigue sembrando dolor en silencio. Seguir esperando a quien ya eligió marcharse es una forma lenta de abandonarte a ti mismo.
+                       </p>
+                      
+                       <div className="space-y-3 mb-6 border-t border-slate-800 pt-4">
+                           <div className="flex items-start gap-2">
+                               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                               <span className="text-xs text-slate-200"><strong>Mata la Esperanza:</strong> Destruye la obsesión mental de raíz en 24 horas.</span>
+                           </div>
+                           <div className="flex items-start gap-2">
+                               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                               <span className="text-xs text-slate-200"><strong>Test de la Realidad Brutal:</strong> Desmantela las fantasías de reconciliación.</span>
+                           </div>
+                           <div className="flex items-start gap-2">
+                               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                               <span className="text-xs text-slate-200"><strong>Guiones Anti-Recaída Completos:</strong> Tu escudo definitivo de autorespeto.</span>
+                           </div>
+                       </div>
+
+
+                       {/* Enlace directo a la pasarela de pago */}
+                       <a
+                           href="#"
+                           className="block w-full py-4 bg-emerald-500 text-slate-900 font-black text-center rounded-xl shadow-lg hover:bg-emerald-400 hover:scale-[1.02] active:scale-95 transition-all duration-300 text-sm"
+                       >
+                           QUIERO ADQUIRIR EL PROGRAMA ($47)
+                       </a>
+                       <p className="text-center text-[10px] text-slate-400 mt-4">
+                           Compra protegida. 30 días de garantía de satisfacción total.
+                       </p>
+                   </div>
+
+
+                   <button
+                       onClick={() => setView('home')}
+                       className="text-xs font-medium text-slate-500 hover:text-slate-800 transition-colors pt-2"
+                   >
+                       Volver al panel inicial
+                   </button>
+               </div>
+           );
+       }
+
+
+       // --- COMPONENTE PRINCIPAL (App) ---
+       function App() {
+           // Router de vistas: home, interceptor_input, interceptor_result, stalker_timer, email_gate, success_cta
+           const [view, setView] = useState('home');
+          
+           // Estados del Interceptor de mensajes
+           const [messageDraft, setMessageDraft] = useState('');
+           const [isTranslating, setIsTranslating] = useState(false);
+           const [selectedTranslation, setSelectedTranslation] = useState('');
+          
+           // Estados del Temporizador Stalker
+           const [timeLeft, setTimeLeft] = useState(300);
+           const [quoteIndex, setQuoteIndex] = useState(0);
+           const [isMuted, setIsMuted] = useState(false);
+           const [showAbortConfirm, setShowAbortConfirm] = useState(false);
+          
+           // Estados de Captación de Correo (Email Gate)
+           const [optInEmail, setOptInEmail] = useState('');
+           const [registeredEmail, setRegisteredEmail] = useState('');
+           const [isSubmitting, setIsSubmitting] = useState(false);
+           const [sourceCrisis, setSourceCrisis] = useState(''); // 'message' o 'stalk'
+
+
+           // Guardado persistente de estadísticas (Dignidad acumulada)
+           const [stats, setStats] = useState({ avoidedMessages: 0, avoidedStalks: 0 });
+
+
+           // Recuperar datos históricos del LocalStorage al cargar la aplicación
+           useEffect(() => {
+               const savedStats = localStorage.getItem('mataEsperanza_stats');
+               if (savedStats) {
+                   try {
+                       setStats(JSON.parse(savedStats));
+                   } catch (e) {
+                       console.error("Error al cargar localStorage", e);
+                   }
+               }
+           }, []);
+
+
+           // Efecto de ciclo de vida del Sintetizador Ambiental de Meditación
+           useEffect(() => {
+               if (view === 'stalker_timer') {
+                   ambientPlayer.setMute(isMuted);
+                   ambientPlayer.start();
+               } else {
+                   ambientPlayer.stop();
+               }
+              
+               return () => {
+                   ambientPlayer.stop();
+               };
+           }, [view]);
+
+
+           // Escucha activa de cambios en el estado de muteo desde el UI
+           useEffect(() => {
+               ambientPlayer.setMute(isMuted);
+           }, [isMuted]);
+
+
+           // Actualizar contador de recaídas evitadas y guardarlo localmente
+           const updateStats = (type) => {
+               const newStats = { ...stats };
+               if (type === 'message') newStats.avoidedMessages += 1;
+               if (type === 'stalk') newStats.avoidedStalks += 1;
+               setStats(newStats);
+               localStorage.setItem('mataEsperanza_stats', JSON.stringify(newStats));
+           };
+
+
+           // Control de cuenta regresiva
+           useEffect(() => {
+               if (view !== 'stalker_timer') return;
+              
+               if (timeLeft <= 0) {
+                   handleTimerSuccess();
+                   return;
+               }
+
+
+               const interval = setInterval(() => {
+                   setTimeLeft((prev) => prev - 1);
+               }, 1000);
+
+
+               return () => clearInterval(interval);
+           }, [view, timeLeft]);
+
+
+           // Rotación independiente de frases cada 8 segundos
+           useEffect(() => {
+               if (view !== 'stalker_timer') return;
+
+
+               const quoteInterval = setInterval(() => {
+                   setQuoteIndex((prev) => (prev + 1) % CONSCIOUS_STALKING_QUOTES.length);
+               }, 8000);
+
+
+               return () => clearInterval(quoteInterval);
+           }, [view]);
+
+
+           const formatTime = (seconds) => {
+               const m = Math.floor(seconds / 60);
+               const s = seconds % 60;
+               return `${m}:${s.toString().padStart(2, '0')}`;
+           };
+
+
+           // Acciones del simulador de mensajes
+           const handleAnalyzeMessage = (e) => {
+               e.preventDefault();
+               if (!messageDraft.trim()) return;
+               setIsTranslating(true);
+              
+               const randomIndex = Math.floor(Math.random() * BRUTAL_TRANSLATIONS.length);
+               setSelectedTranslation(BRUTAL_TRANSLATIONS[randomIndex]);
+
+
+               setTimeout(() => {
+                   setIsTranslating(false);
+                   setView('interceptor_result');
+               }, 1500);
+           };
+
+
+           // Ir al Opt-in desde el simulador de mensajes
+           const handleGoToEmailGate = () => {
+               updateStats('message');
+               setSourceCrisis('message');
+               setView('email_gate');
+           };
+
+
+           // Acciones del Protocolo de Stalkeo
+           const startStalkerBrake = () => {
+               setTimeLeft(300);
+               setQuoteIndex(0);
+               setShowAbortConfirm(false);
+               setView('stalker_timer');
+           };
+
+
+           const handleTimerSuccess = () => {
+               updateStats('stalk');
+               setSourceCrisis('stalk');
+               setView('email_gate');
+           };
+
+
+           const triggerAbortConfirmation = () => {
+               setShowAbortConfirm(true);
+           };
+
+
+           const confirmAbort = () => {
+               setShowAbortConfirm(false);
+               setView('home');
+           };
+
+
+           const cancelAbort = () => {
+               setShowAbortConfirm(false);
+           };
+
+
+           // Envío del Formulario de Suscripción (Opt-in)
+           const handleOptIn = (e) => {
+               e.preventDefault();
+               if (!optInEmail.trim()) return;
+               setIsSubmitting(true);
+
+
+               // --- INTEGRACIÓN DE MARKETING (NOTA PARA EL DESARROLLADOR DE PRODUCCIÓN) ---
+               // Aquí es donde puedes agregar un webhook de ActiveCampaign, Mailchimp, ConvertKit, etc.
+               // Ejemplo: fetch('TU_WEBHOOK_URL', { method: 'POST', body: JSON.stringify({ email: optInEmail }) })
+              
+               setTimeout(() => {
+                   setIsSubmitting(false);
+                   setRegisteredEmail(optInEmail);
+                   setOptInEmail('');
+                   setMessageDraft('');
+                   setView('success_cta');
+               }, 1800);
+           };
+
+
+           return (
+               <div className="max-w-md mx-auto bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden min-h-[500px] flex flex-col">
+                   {/* Header mínimo */}
+                   <div className="bg-slate-900 px-6 py-4 flex items-center justify-between">
+                       <div className="flex items-center gap-2">
+                           <ShieldAlert className="w-5 h-5 text-emerald-400" />
+                           <span className="font-bold text-white tracking-wide text-xs">PANEL DE EMERGENCIA</span>
+                       </div>
+                   </div>
+                  
+                   {/* Contenedor dinámico */}
+                   <div className="p-6 flex-1 flex flex-col justify-between">
+                       <div>
+                           {view === 'home' && (
+                               <HomeView
+                                   setView={setView}
+                                   startStalkerBrake={startStalkerBrake}
+                                   stats={stats}
+                               />
+                           )}
+                          
+                           {view === 'interceptor_input' && (
+                               <InterceptorInputView
+                                   setView={setView}
+                                   messageDraft={messageDraft}
+                                   setMessageDraft={setMessageDraft}
+                                   handleAnalyzeMessage={handleAnalyzeMessage}
+                                   isTranslating={isTranslating}
+                               />
+                           )}
+                          
+                           {view === 'interceptor_result' && (
+                               <InterceptorResultView
+                                   setView={setView}
+                                   messageDraft={messageDraft}
+                                   selectedTranslation={selectedTranslation}
+                                   handleGoToEmailGate={handleGoToEmailGate}
+                               />
+                           )}
+                          
+                           {view === 'stalker_timer' && (
+                               <StalkerTimerView
+                                   timeLeft={timeLeft}
+                                   quoteIndex={quoteIndex}
+                                   showAbortConfirm={showAbortConfirm}
+                                   confirmAbort={confirmAbort}
+                                   cancelAbort={cancelAbort}
+                                   triggerAbortConfirmation={triggerAbortConfirmation}
+                                   formatTime={formatTime}
+                                   isMuted={isMuted}
+                                   setIsMuted={setIsMuted}
+                               />
+                           )}
+
+
+                           {view === 'email_gate' && (
+                               <EmailGateView
+                                   setView={setView}
+                                   handleOptIn={handleOptIn}
+                                   optInEmail={optInEmail}
+                                   setOptInEmail={setOptInEmail}
+                                   isSubmitting={isSubmitting}
+                                   sourceCrisis={sourceCrisis}
+                               />
+                           )}
+                          
+                           {view === 'success_cta' && (
+                               <SuccessCTAView
+                                   setView={setView}
+                                   registeredEmail={registeredEmail}
+                               />
+                           )}
+                       </div>
+                   </div>
+               </div>
+           );
+       }
+
+
+       const root = createRoot(document.getElementById('root'));
+       root.render(<App />);
+   </script>
+</body>
+</html>
+
