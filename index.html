@@ -83,7 +83,7 @@
            "El impulso incontrolable de stalkear dura solo unos minutos. Tu dignidad y tu paz mental duran toda la vida. Recupera el control de tus dedos ahora mismo."
        ];
 
-       // --- SINTETIZADOR AMBIENTAL NATIVO (BLINDADO CONTRA ERRORES DE ESTADO) ---
+       // --- SINTETIZADOR AMBIENTAL NATIVO ---
        class AmbientSynth {
            constructor() {
                this.ctx = null;
@@ -722,7 +722,22 @@
            const confirmAbort = () => { setShowAbortConfirm(false); setView('home'); };
            const cancelAbort = () => { setShowAbortConfirm(false); };
 
-           // Conexión nativa con GHL (Promesas seguras, sin async/await que choque con Babel)
+           // --- AQUÍ ESTÁ LA FUNCIÓN QUE FALTABA (EL MOTOR DEL SIMULADOR) ---
+           const handleAnalyzeMessage = (e) => {
+               e.preventDefault();
+               if (!messageDraft.trim()) return;
+               setIsTranslating(true);
+
+               const randomIndex = Math.floor(Math.random() * BRUTAL_TRANSLATIONS.length);
+               setSelectedTranslation(BRUTAL_TRANSLATIONS[randomIndex]);
+
+               setTimeout(() => {
+                   setIsTranslating(false);
+                   setView('interceptor_result');
+               }, 1500);
+           };
+
+           // Conexión nativa con GHL (Promesas seguras)
            const handleOptIn = (e) => {
                e.preventDefault();
                if (!optInEmail.trim()) return;
