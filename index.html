@@ -349,26 +349,42 @@
                            <MessageSquare className="w-8 h-8 text-indigo-500 mb-3 group-hover:scale-110 transition-transform duration-300" />
                            <span className="font-semibold text-lg text-slate-800">Tengo ganas de Escribirle</span>
                            <span className="text-sm text-slate-500 mt-1">Intercepta tu mensaje antes de enviarlo</span>
-                       </button>
+          // Envío del Formulario de Suscripción (Opt-in) con conexión a GHL
+            const handleOptIn = async (e) => {
+                e.preventDefault();
+                if (!optInEmail.trim()) return;
+                setIsSubmitting(true);
 
+                const webhookUrl = "https://services.leadconnectorhq.com/hooks/8fyHQ2c4yy3GFQStNOHK/webhook-trigger/bH8iaSwQfQRC45EcG4aA";
 
-                       <button
-                           onClick={startStalkerBrake}
-                           className="w-full group relative flex flex-col items-center justify-center p-6 bg-white border-2 border-slate-200 rounded-xl hover:border-red-500 hover:shadow-md transition-all duration-300 active:scale-95"
-                       >
-                           <Eye className="w-8 h-8 text-red-500 mb-3 group-hover:scale-110 transition-transform duration-300" />
-                           <span className="font-semibold text-lg text-slate-800">Tengo ganas de Stalkear</span>
-                           <span className="text-sm text-slate-500 mt-1">Bloqueo de ansiedad de 5 minutos</span>
-                       </button>
-                   </div>
+                try {
+                    const response = await fetch(webhookUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            email: optInEmail, 
+                            source: "Freno de Emergencia Anti-Ex" 
+                        })
+                    });
 
-
-                   {/* Gamificación: Stats guardadas */}
-                   {(stats.avoidedMessages > 0 || stats.avoidedStalks > 0) && (
-                       <div className="mt-8 p-4 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center gap-4">
-                           <div className="p-2 bg-emerald-100 rounded-lg">
-                               <Award className="w-6 h-6 text-emerald-600" />
-                           </div>
+                    if (response.ok) {
+                        console.log("Lead enviado a GHL");
+                        setRegisteredEmail(optInEmail);
+                        setOptInEmail('');
+                        setMessageDraft('');
+                        setView('success_cta');
+                    } else {
+                        throw new Error("Error en el servidor de GHL");
+                    }
+                } catch (err) {
+                    console.error("Fallo:", err);
+                    alert("Hubo un error al guardar tu contacto, pero puedes continuar.");
+                    // Forzamos el paso para no bloquear al usuario
+                    setView('success_cta');
+                } finally {
+                    setIsSubmitting(false);
+                }
+            };
                            <div>
                                <p className="text-sm font-semibold text-emerald-900">Dignidad Salvada en el Historial</p>
                                <p className="text-xs text-emerald-700">
