@@ -22,7 +22,44 @@
   
    <!-- Babel para compilar JSX en el navegador -->
    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script>
+    // Función central: Captura correo y dispara el flujo hacia GoHighLevel
+    function enviarKitGHL() {
+        // 1. Configuración del destino (tu nuevo Webhook de GHL)
+        const webhookUrl = "https://services.leadconnectorhq.com/hooks/8fyHQ2c4yy3GFQStNOHK/webhook-trigger/bH8iaSwQfQRC45EcG4aA";
+        
+        // 2. Captura del único dato necesario
+        const emailInput = document.getElementById("lead-email");
+        const emailValue = emailInput ? emailInput.value.trim() : "";
 
+        // 3. Validación de valor (Hormozi: No regales "tonterías", sé claro y directo)
+        if (!emailValue || !emailValue.includes("@")) {
+            alert("Por favor, ingresa un correo válido. La precisión es clave para tu rescate.");
+            return;
+        }
+
+        // 4. Paquete de datos simplificado
+        const payload = {
+            email: emailValue,
+            source: "Freno de Emergencia Anti-Ex"
+        };
+
+        // 5. Envío en segundo plano para no interrumpir la experiencia del usuario
+        fetch(webhookUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        })
+        .then(response => {
+            console.log("Sincronización exitosa con GoHighLevel");
+            alert("¡Kit de Rescate Desbloqueado! Revisa tu bandeja de entrada en los próximos 2 minutos.");
+        })
+        .catch(error => {
+            console.error("Error al capturar lead:", error);
+            alert("Surgió un pequeño error técnico, pero estamos procesando tu solicitud.");
+        });
+    }
+</script>
 
    <style>
        /* Animaciones personalizadas con Tailwind */
